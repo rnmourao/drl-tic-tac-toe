@@ -1,6 +1,6 @@
 import random
 import numpy as np
-from model import QNetwork, Actor
+from model import QNetwork
 from collections import namedtuple, deque
 import torch
 import torch.nn.functional as F
@@ -34,8 +34,8 @@ class Agent():
         self.seed = random.seed(seed)
 
         # Q-Network
-        self.qnetwork_local = Actor(state_size, action_size, seed).to(self.device)
-        self.qnetwork_target = Actor(state_size, action_size, seed).to(self.device)
+        self.qnetwork_local = QNetwork(state_size, action_size, seed).to(self.device)
+        self.qnetwork_target = QNetwork(state_size, action_size, seed).to(self.device)
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
         # Replay memory
@@ -63,17 +63,19 @@ class Agent():
             state (array_like): current state
             eps (float): epsilon, for epsilon-greedy action selection
         """
-        state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
+        st = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
         self.qnetwork_local.eval()
         with torch.no_grad():
-            action_values = self.qnetwork_local(state)
+            action_values = self.qnetwork_local(st)
         self.qnetwork_local.train()
 
         # Epsilon-greedy action selection
         if random.random() > eps:
             return np.argmax(action_values.cpu().data.numpy())
         else:
-            return random.choice(np.arange(self.action_size))
+            choices = np.where(state == 0)[0]
+            choice = random.choice(choices)
+            return choice
 
     def learn(self, experiences, gamma):
         """Update value parameters using given batch of experience tuples.

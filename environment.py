@@ -27,9 +27,6 @@ class TicTacToeEnv(gym.Env):
     self.shape = shape
     self.size = np.multiply(*self.shape)
 
-    # the tic-tac-toe board, but in 1D-array representation
-    self.board = np.array([0] * self.size).astype(np.float32)
-
     # the observation space is an 1D-array where each element represents a place in the 
     # tic-tac-toe board and can have 3 possible values: -1, 0, and 1, which represent,
     # respectively, enemy, blank, and player.
@@ -82,7 +79,7 @@ class TicTacToeEnv(gym.Env):
     next_state[action] = 1
     
     # identify coordinates with player moves
-    grid = np.reshape(self.board, self.shape)
+    grid = np.reshape(next_state, self.shape)
     coords = list(zip(*np.where(grid == 1)))
 
     # check win
@@ -91,20 +88,20 @@ class TicTacToeEnv(gym.Env):
       return "win", next_state, row
 
     # check if there is a withdraw
-    if np.where(self.board == 0) == None:
+    if len(np.where(next_state == 0)[0]) == 0:
       return "withdraw", next_state, row
     
     return "", next_state, row
 
 
-  def render(self, mode='console'):
+  def render(self, state, mode='console'):
     if mode != 'console':
       raise NotImplementedError()
     
     symbols = {-1: "O", 0: " ", 1: "P"}
 
     grid = ""
-    for i, value in enumerate(self.board):
+    for i, value in enumerate(state):
       grid += symbols[value]
       if (i+1) % self.row_size == 0:
         grid += "\n"
