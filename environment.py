@@ -1,8 +1,7 @@
 import numpy as np
 import gym
 from gym import spaces
-from utils import check_collinearity
-
+from utils import check_outcome
 
 class TicTacToeEnv(gym.Env):
   """
@@ -44,9 +43,9 @@ class TicTacToeEnv(gym.Env):
     return np.array([0] * self.size).astype(np.float32)
 
 
-  def step(self, state, action):
+  def step(self, state, action, agent):
     
-    outcome, next_state, row = self.check_outcome(state, action)
+    outcome, next_state, row = check_outcome(state, action, self.shape, self.row_size)
 
     if outcome == "win":
       reward = 1
@@ -64,34 +63,6 @@ class TicTacToeEnv(gym.Env):
     info = {"outcome": outcome, "row": row}
 
     return next_state, reward, done, info
-
-
-  def check_outcome(self, state, action):
-    row = None
-    next_state = state.copy()
-
-    # check if player made an illegal movement
-    value = state.item(action)
-    if value != 0:
-      return "mistake", next_state, row
-
-    # update board
-    next_state[action] = 1
-    
-    # identify coordinates with player moves
-    grid = np.reshape(next_state, self.shape)
-    coords = list(zip(*np.where(grid == 1)))
-
-    # check win
-    win, row = check_collinearity(coords, self.row_size)
-    if win:
-      return "win", next_state, row
-
-    # check if there is a withdraw
-    if len(np.where(next_state == 0)[0]) == 0:
-      return "withdraw", next_state, row
-    
-    return "", next_state, row
 
 
   def render(self, state, mode='console'):

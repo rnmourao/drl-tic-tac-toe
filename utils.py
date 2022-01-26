@@ -2,6 +2,34 @@ import numpy as np
 from itertools import combinations
 
 
+def check_outcome(state, action, shape, row_size):
+  row = None
+  next_state = state.copy()
+
+  # check if player made an illegal movement
+  value = state.item(action)
+  if value != 0:
+    return "mistake", next_state, row
+
+  # update board
+  next_state[action] = 1
+  
+  # identify coordinates with player moves
+  grid = np.reshape(next_state, shape)
+  coords = list(zip(*np.where(grid == 1)))
+
+  # check win
+  win, row = check_collinearity(coords, row_size)
+  if win:
+    return "win", next_state, row
+
+  # check if there is a withdraw
+  if len(np.where(next_state == 0)[0]) == 0:
+    return "withdraw", next_state, row
+  
+  return "", next_state, row
+
+
 def check_collinearity(coords, row_size):
   row = None
 
