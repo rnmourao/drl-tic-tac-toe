@@ -5,28 +5,30 @@ from collections import namedtuple, deque
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from itertools import islice
 
 
 BUFFER_SIZE = int(1e5)  # replay buffer size
-BATCH_SIZE = 256         # minibatch size
+BATCH_SIZE = 10000      # minibatch size
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
 LR = 1e-3               # learning rate
-UPDATE_EVERY = 100      # how often to update the network
+UPDATE_EVERY = 1000     # how often to update the network
 
 
 class Agent():
     """Interacts with and learns from the environment."""
 
-    def __init__(self, symbol, state_size, action_size, device, seed):
+    def __init__(self, symbol, state_size, action_size, device, seed=2022, filename=""):
         """Initialize an Agent object.
 
         Params
         ======
+            symbol (str): 'X' or 'O'
             state_size (int): dimension of each state
             action_size (int): dimension of each action
+            device (str): 'cpu' or 'cuda:0'
             seed (int): random seed
+            filename (str): optional. Indicates the filename of a previous trained model
         """
         self.symbol = symbol
         self.state_size = state_size
@@ -38,11 +40,15 @@ class Agent():
         self.score = 0
 
         # Q-Network
-        self.qnetwork_local = QNetwork(
-            state_size, action_size, seed).to(self.device)
-        self.qnetwork_target = QNetwork(
-            state_size, action_size, seed).to(self.device)
-        self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
+        if filename:
+            self.qnetwork_local = QNetwork(state_size, action_size)
+            self.qnetwork_local.load_state_dict(torch.load(filename))
+        else:
+            self.qnetwork_local = QNetwork(
+                state_size, action_size, seed).to(self.device)
+            self.qnetwork_target = QNetwork(
+                state_size, action_size, seed).to(self.device)
+            self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
         # Replay memory
         self.memory = ReplayBuffer(
